@@ -7,6 +7,8 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
+var defaultJoiner string = " "
+
 // ConfigItem represents a single configuration item in the YAML
 type ConfigItem struct {
 	Name   string      `yaml:"name"`
@@ -18,8 +20,6 @@ type ConfigItem struct {
 type Config struct {
 	Items []ConfigItem `yaml:"items,omitempty"` // Configuration items
 }
-
-
 
 // ParseConfig reads and parses the YAML configuration file
 func ParseConfig(configPath string) ([]ConfigItem, error) {
@@ -46,6 +46,8 @@ func ParseConfig(configPath string) ([]ConfigItem, error) {
 			}
 			if joiner, ok := v["joiner"].(string); ok {
 				item.Joiner = &joiner
+			} else {
+				item.Joiner = &defaultJoiner
 			}
 			configItems = append(configItems, item)
 		case string:
@@ -90,7 +92,10 @@ func ParseConfigWithOptions(configPath string) ([]ConfigItem, error) {
 			}
 			if joiner, ok := v["joiner"].(string); ok {
 				item.Joiner = &joiner
+			} else {
+				item.Joiner = &defaultJoiner
 			}
+
 			configItems = append(configItems, item)
 		case string:
 			configItems = append(configItems, ConfigItem{Name: "", Value: v})

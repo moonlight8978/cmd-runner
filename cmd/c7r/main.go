@@ -9,7 +9,6 @@ import (
 	"github.com/moonlight8978/cmd-runner/pkg/runner"
 )
 
-// parseArgs scans os.Args for special flags and the command, supporting flags before or after the command.
 type ParsedArgs struct {
 	ConfigPath string
 	DryRun     bool
@@ -19,63 +18,45 @@ type ParsedArgs struct {
 
 func parseArgs() (*ParsedArgs, error) {
 	args := os.Args[1:]
-	var (
-		configPath string
-		dryRun = false
-		command string
-		cmdArgs []string
-	)
+	if len(args) == 0 {
+		return nil, fmt.Errorf("no command specified")
+	}
 
-	// Track which args are our special flags
-	skip := make([]bool, len(args))
+	// First argument must be the command
+	command := args[0]
+	if strings.HasPrefix(command, "-") {
+		return nil, fmt.Errorf("command must be the first argument")
+	}
 
-	// First pass: extract our flags
-	for i := 0; i < len(args); i++ {
-		if args[i] == "--config" && i+1 < len(args) {
+	var configPath string
+	var dryRun bool
+
+	// Parse remaining args
+	i := 1
+	for i < len(args) {
+		switch args[i] {
+		case "--config":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--config requires a value")
+			}
 			configPath = args[i+1]
-			skip[i], skip[i+1] = true, true
-			i++
-		} else if strings.HasPrefix(args[i], "--config=") {
-			configPath = strings.TrimPrefix(args[i], "--config=")
-			skip[i] = true
-		} else if args[i] == "--dry-run" {
+			i += 2
+		case "--dry-run":
 			dryRun = true
-			skip[i] = true
+			i++
+		default:
+			i++
 		}
-	}
-
-	// Second pass: find the command (first non-flag, non-skipped arg)
-	for i, arg := range args {
-		if skip[i] {
-			continue
-		}
-		if command == "" && !strings.HasPrefix(arg, "-") {
-			command = arg
-			skip[i] = true
-			continue
-		}
-	}
-
-	// Third pass: collect remaining args as command args
-	for i, arg := range args {
-		if skip[i] {
-			continue
-		}
-		cmdArgs = append(cmdArgs, arg)
 	}
 
 	if configPath == "" {
 		return nil, fmt.Errorf("--config flag is required")
-	}
-	if command == "" {
-		return nil, fmt.Errorf("no command specified")
 	}
 
 	return &ParsedArgs{
 		ConfigPath: configPath,
 		DryRun:     dryRun,
 		Command:    command,
-		CmdArgs:    cmdArgs,
 	}, nil
 }
 
@@ -83,7 +64,7 @@ func main() {
 	parsed, err := parseArgs()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Usage: %s <command> [args...] --config <config.yaml> [--dry-run]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s COMMAND [args...] --config <config.yaml> [--dry-run]\n", os.Args[0])
 		os.Exit(1)
 	}
 

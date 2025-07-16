@@ -27,39 +27,42 @@ func (cr *CommandRunner) BuildArgs(config []ConfigItem) []string {
 			}
 			continue
 		}
-		joiner := " " // Default joiner (space)
-		if item.Joiner != nil {
-			joiner = *item.Joiner
-		}
+
+		joiner := *item.Joiner
 		switch v := item.Value.(type) {
 		case string:
-			args = append(args, cr.formatFlag(item.Name, v, joiner))
+			args = append(args, cr.formatFlag(item.Name, v, joiner)...)
 		case []interface{}:
 			for _, val := range v {
 				if str, ok := val.(string); ok {
-					args = append(args, cr.formatFlag(item.Name, str, joiner))
+					args = append(args, cr.formatFlag(item.Name, str, joiner)...)
 				}
 			}
 		case []string:
 			for _, val := range v {
-				args = append(args, cr.formatFlag(item.Name, val, joiner))
+				args = append(args, cr.formatFlag(item.Name, val, joiner)...)
 			}
 		default:
-			args = append(args, cr.formatFlag(item.Name, fmt.Sprintf("%v", v), joiner))
+			args = append(args, cr.formatFlag(item.Name, fmt.Sprintf("%v", v), joiner)...)
 		}
 	}
 	return args
 }
 
 // formatFlag formats a flag name and value according to the configuration
-func (cr *CommandRunner) formatFlag(name, value string, joiner string) string {
+func (cr *CommandRunner) formatFlag(name, value string, joiner string) []string {
 	// Expand environment variables in the value
 	value = expandEnvVars(value)
 
 	if strings.Contains(value, " ") {
 		value = fmt.Sprintf(`"%s"`, value)
 	}
-	return fmt.Sprintf("%s%s%s", name, joiner, value)
+
+	if joiner == " " {
+		return []string{name, value}
+	}
+
+	return []string{fmt.Sprintf("%s%s%s", name, joiner, value)}
 }
 
 // expandEnvVars replaces $VAR or ${VAR} with environment variable values
