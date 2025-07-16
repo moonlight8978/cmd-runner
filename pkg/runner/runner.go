@@ -54,12 +54,12 @@ func (cr *CommandRunner) formatFlag(name, value string, joiner string) []string 
 	// Expand environment variables in the value
 	value = expandEnvVars(value)
 
-	if strings.Contains(value, " ") {
-		value = fmt.Sprintf(`"%s"`, value)
-	}
-
 	if joiner == " " {
 		return []string{name, value}
+	}
+
+	if strings.Contains(value, " ") {
+		value = fmt.Sprintf(`"%s"`, value)
 	}
 
 	return []string{fmt.Sprintf("%s%s%s", name, joiner, value)}
