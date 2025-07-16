@@ -13,7 +13,6 @@ type ParsedArgs struct {
 	ConfigPath string
 	DryRun     bool
 	Command    string
-	CmdArgs    []string
 }
 
 func parseArgs() (*ParsedArgs, error) {
@@ -78,15 +77,14 @@ func main() {
 	// Build arguments from config
 	commandRunner := runner.NewCommandRunner()
 	configArgs := commandRunner.BuildArgs(configItems)
-	finalArgs := append(parsed.CmdArgs, configArgs...)
 
 	if parsed.DryRun {
-		fmt.Printf("Command: %s %s\n", parsed.Command, strings.Join(finalArgs, " "))
+		fmt.Printf("Command: %s %s\n", parsed.Command, strings.Join(configArgs, " "))
 		return
 	}
 
 	// Execute the command
-	if err := commandRunner.RunCommand(parsed.Command, finalArgs); err != nil {
+	if err := commandRunner.RunCommand(parsed.Command, configArgs); err != nil {
 		fmt.Fprintf(os.Stderr, "%v", err)
 		// Try to get exit code from the error
 		if exitErr, ok := err.(*exec.ExitError); ok {
